@@ -22,7 +22,8 @@ RUN apk add --no-cache \
     oniguruma-dev \
     nodejs \
     npm \
-    gettext
+    gettext \
+    curl
 
 # Install PHP extensions
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
@@ -86,5 +87,9 @@ COPY docker/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 EXPOSE 3000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:3000/ || exit 1
 
 CMD ["/entrypoint.sh"]

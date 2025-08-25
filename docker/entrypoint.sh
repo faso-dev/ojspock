@@ -18,8 +18,12 @@ export SMTP_USERNAME="${SMTP_USERNAME:-}"
 export SMTP_PASSWORD="${SMTP_PASSWORD:-}"
 export SMTP_ENCRYPTION="${SMTP_ENCRYPTION:-none}"
 
-# Create config.inc.php from template with environment variables
+# Remove config.inc.php if it exists as directory, then create file
 echo "Creating config.inc.php with environment configuration..."
+if [ -d /var/www/html/config.inc.php ]; then
+    echo "Removing config.inc.php directory..."
+    rm -rf /var/www/html/config.inc.php
+fi
 envsubst < /var/www/html/docker/config.docker.inc.php > /var/www/html/config.inc.php
 chmod 644 /var/www/html/config.inc.php
 
