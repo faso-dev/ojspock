@@ -15,11 +15,15 @@ RUN apk add --no-cache \
     libxml2-dev \
     libxslt-dev \
     icu-dev \
+    libzip-dev \
+    postgresql-dev \
     mysql-client \
-    postgresql-client
+    postgresql-client \
+    oniguruma-dev
 
 # Install PHP extensions
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-configure pgsql -with-pgsql=/usr/local/pgsql \
     && docker-php-ext-install -j$(nproc) \
         gd \
         mysqli \
@@ -31,7 +35,8 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
         xsl \
         intl \
         opcache \
-        bcmath
+        bcmath \
+        mbstring
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
