@@ -18,14 +18,16 @@ export SMTP_USERNAME="${SMTP_USERNAME:-}"
 export SMTP_PASSWORD="${SMTP_PASSWORD:-}"
 export SMTP_ENCRYPTION="${SMTP_ENCRYPTION:-none}"
 
-# Remove config.inc.php if it exists as directory, then create file
-echo "Creating config.inc.php with environment configuration..."
-if [ -d /var/www/html/config.inc.php ]; then
-    echo "Removing config.inc.php directory..."
-    rm -rf /var/www/html/config.inc.php
+# Create config.inc.php only if it doesn't exist
+if [ ! -f /var/www/html/config.inc.php ]; then
+    echo "Creating config.inc.php from template..."
+    # Copy template as base
+    cp /var/www/html/config.TEMPLATE.inc.php /var/www/html/config.inc.php
+    chmod 644 /var/www/html/config.inc.php
+    echo "config.inc.php created from template. Please configure database settings manually."
+else
+    echo "config.inc.php already exists, skipping creation"
 fi
-envsubst < /var/www/html/docker/config.docker.inc.php > /var/www/html/config.inc.php
-chmod 644 /var/www/html/config.inc.php
 
 # Wait for database
 echo "Waiting for database..."
