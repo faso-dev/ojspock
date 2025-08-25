@@ -8,6 +8,7 @@
 2. **Source**: Connecter votre repository GitHub
 3. **Type**: Sélectionner "Docker Compose"
 4. **Fichier**: `docker-compose.yml`
+5. **Port**: L'application expose le port 3000 (évite les conflits avec Coolify)
 
 ### Option 2: Utiliser Nixpacks
 
