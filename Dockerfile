@@ -19,7 +19,9 @@ RUN apk add --no-cache \
     postgresql-dev \
     mysql-client \
     postgresql-client \
-    oniguruma-dev
+    oniguruma-dev \
+    nodejs \
+    npm
 
 # Install PHP extensions
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
@@ -50,8 +52,13 @@ WORKDIR /var/www/html
 # Copy application files
 COPY --chown=www-data:www-data . .
 
-# Install PHP dependencies
-RUN composer install --no-dev --optimize-autoloader --no-interaction
+# Install OJS specific dependencies
+RUN composer --working-dir=lib/pkp install --no-dev --optimize-autoloader --no-interaction \
+    && composer --working-dir=plugins/generic/citationStyleLanguage install --no-dev --optimize-autoloader --no-interaction \
+    && composer --working-dir=plugins/paymethod/paypal install --no-dev --optimize-autoloader --no-interaction \
+    && npm install \
+    && npm run build \
+    && npm cache clean --force
 
 # Create directories and set permissions
 RUN mkdir -p storage/tmp \
