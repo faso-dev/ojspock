@@ -1,0 +1,96 @@
+version: '3.8'
+
+services:
+  app:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    environment:
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_USER=${DB_USER:-ojs}
+      - DB_PASSWORD=${DB_PASSWORD:-ojs_password}
+      - DB_DATABASE=${DB_DATABASE:-ojs}
+    volumes:
+      # Données persistantes
+      - ojs_storage:/var/www/html/storage
+      - ojs_cache:/var/www/html/cache
+      - ojs_public:/var/www/html/public
+      - ojs_config:/var/www/html/config.inc.php:ro
+    depends_on:
+      - db
+      - redis
+    restart: unless-stopped
+    networks:
+      - ojs-network
+
+  db:
+    image: mysql:8.0
+    environment:
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD:-root_password}
+      - MYSQL_DATABASE=${DB_DATABASE:-ojs}
+      - MYSQL_USER=${DB_USER:-ojs}
+      - MYSQL_PASSWORD=${DB_PASSWORD:-ojs_password}
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./docker/mysql.cnf:/etc/mysql/conf.d/custom.cnf
+    ports:
+      - "3306:3306"
+    restart: unless-stopped
+    networks:
+      - ojs-network
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    networks:
+      - ojs-network
+
+  # Service de backup automatique
+  backup:
+    image: mysql:8.0
+    depends_on:
+      - db
+    volumes:
+      - backup_data:/backup
+      - ./docker/backup.sh:/backup.sh:ro
+    environment:
+      - DB_HOST=db
+      - DB_USER=${DB_USER:-ojs}
+      - DB_PASSWORD=${DB_PASSWORD:-ojs_password}
+      - DB_DATABASE=${DB_DATABASE:-ojs}
+    command: >
+      sh -c "
+        while true; do
+          sleep 86400
+          mysqldump -h db -u $${DB_USER} -p$${DB_PASSWORD} $${DB_DATABASE} > /backup/ojs_$$(date +%Y%m%d_%H%M%S).sql
+          find /backup -name '*.sql' -mtime +7 -delete
+        done
+      "
+    restart: unless-stopped
+    networks:
+      - ojs-network
+
+volumes:
+  mysql_data:
+    driver: local
+  redis_data:
+    driver: local
+  ojs_storage:
+    driver: local
+  ojs_cache:
+    driver: local
+  ojs_public:
+    driver: local
+  ojs_config:
+    driver: local
+  backup_data:
+    driver: local
+
+networks:
+  ojs-network:
+    driver: bridge
