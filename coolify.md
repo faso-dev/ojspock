@@ -31,6 +31,16 @@ DB_DATABASE=<nom_database>
 APP_URL=https://votre-domaine.com
 APP_ENV=production
 
+# Email Configuration (IMPORTANT pour production)
+SMTP_METHOD=smtp
+SMTP_HOST=smtp.votre-provider.com
+SMTP_PORT=587
+SMTP_AUTH=On
+SMTP_USERNAME=votre-email@domaine.com
+SMTP_PASSWORD=votre-mot-de-passe-email
+SMTP_ENCRYPTION=tls
+SMTP_FROM_EMAIL=noreply@votre-domaine.com
+
 # Limites fichiers
 MAX_FILE_SIZE=100M
 MEMORY_LIMIT=512M

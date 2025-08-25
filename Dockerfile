@@ -21,7 +21,8 @@ RUN apk add --no-cache \
     postgresql-client \
     oniguruma-dev \
     nodejs \
-    npm
+    npm \
+    gettext
 
 # Install PHP extensions
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
