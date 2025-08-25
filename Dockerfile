@@ -38,7 +38,8 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
         intl \
         opcache \
         bcmath \
-        mbstring
+        mbstring \
+        ftp
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
