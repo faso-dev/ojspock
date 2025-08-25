@@ -65,7 +65,7 @@ RUN composer --working-dir=lib/pkp install --no-dev --optimize-autoloader --no-i
 RUN mkdir -p storage/tmp \
     && chown -R www-data:www-data storage cache public \
     && chmod -R 755 storage cache \
-    && chmod -R 644 config.inc.php
+    && if [ -f config.inc.php ]; then chmod 644 config.inc.php; fi
 
 # Configure PHP
 RUN echo "upload_max_filesize = 100M" >> /usr/local/etc/php/conf.d/uploads.ini \
