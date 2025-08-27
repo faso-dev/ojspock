@@ -18,16 +18,29 @@ export SMTP_USERNAME="${SMTP_USERNAME:-}"
 export SMTP_PASSWORD="${SMTP_PASSWORD:-}"
 export SMTP_ENCRYPTION="${SMTP_ENCRYPTION:-none}"
 
-# Create config.inc.php only if it doesn't exist
-if [ ! -f /var/www/html/config.inc.php ]; then
-    echo "Creating config.inc.php from template..."
-    # Copy template as base
-    cp /var/www/html/config.TEMPLATE.inc.php /var/www/html/config.inc.php
-    chmod 644 /var/www/html/config.inc.php
-    echo "config.inc.php created from template. Please configure database settings manually."
+# Create config.inc.php with environment variables (persistent volume friendly)
+CONFIG_PATH="/var/www/html/config.inc.php"
+PERSISTENT_CONFIG_PATH="/var/www/html/storage/config.inc.php"
+
+# Check if persistent config exists
+if [ -f "$PERSISTENT_CONFIG_PATH" ]; then
+    echo "Using existing persistent configuration..."
+    cp "$PERSISTENT_CONFIG_PATH" "$CONFIG_PATH"
+elif [ ! -f "$CONFIG_PATH" ]; then
+    echo "Creating new configuration from environment variables..."
+    # Generate config with environment substitution
+    envsubst < /var/www/html/docker/config.docker.inc.php > "$CONFIG_PATH"
+    # Save to persistent location
+    cp "$CONFIG_PATH" "$PERSISTENT_CONFIG_PATH"
+    echo "Configuration created and saved to persistent storage"
 else
-    echo "config.inc.php already exists, skipping creation"
+    echo "Configuration already exists, updating from persistent storage if available"
+    if [ -f "$PERSISTENT_CONFIG_PATH" ]; then
+        cp "$PERSISTENT_CONFIG_PATH" "$CONFIG_PATH"
+    fi
 fi
+
+chmod 644 "$CONFIG_PATH"
 
 # Wait for database
 echo "Waiting for database..."
