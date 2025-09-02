@@ -120,7 +120,7 @@ else
 
 [general]
 installed = Off
-base_url = "${APP_URL}"
+base_url = "https://ojs.onassgroupe.com"
 strict = Off
 session_cookie_name = OJSSID
 session_lifetime = 30
@@ -167,8 +167,8 @@ smtp_encryption = "${SMTP_ENCRYPTION}"
 smtp_auth_mechanism = "${SMTP_AUTH_MECHANISM:-PLAIN}"
 
 [security]
-force_ssl = Off
-force_login_ssl = Off
+force_ssl = On
+force_login_ssl = On
 session_check_ip = Off
 remember_me = On
 encryption = sha1
