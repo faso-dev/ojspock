@@ -114,5 +114,30 @@ fi
 EOF
 chmod +x /usr/local/bin/backup-config.sh
 
-# Start supervisor
-exec /usr/bin/supervisord -c /etc/supervisor/supervisord.conf
+# Test PHP-FPM configuration
+echo "Testing PHP-FPM configuration..."
+php-fpm --test --fpm-config /usr/local/etc/php-fpm.d/www.conf
+
+# Start PHP-FPM first
+echo "Starting PHP-FPM..."
+php-fpm --fpm-config /usr/local/etc/php-fpm.d/www.conf &
+PHP_FPM_PID=$!
+
+# Wait for PHP-FPM socket to be created
+echo "Waiting for PHP-FPM socket..."
+for i in $(seq 1 30); do
+    if [ -S /var/run/php-fpm.sock ]; then
+        echo "PHP-FPM socket created successfully"
+        break
+    fi
+    echo "Waiting for PHP-FPM socket... ($i/30)"
+    sleep 1
+done
+
+# Test nginx configuration
+echo "Testing nginx configuration..."
+nginx -t
+
+# Start nginx
+echo "Starting nginx..."
+nginx -g 'daemon off;'
