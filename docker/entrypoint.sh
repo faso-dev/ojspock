@@ -89,10 +89,13 @@ mkdir -p storage/logs
 mkdir -p storage/tmp
 mkdir -p storage/review
 mkdir -p public
+mkdir -p /var/lib/php/session
+mkdir -p /var/lib/php/wsdlcache
 
 # Set proper permissions
-chown -R www-data:www-data storage cache public
+chown -R www-data:www-data storage cache public /var/lib/php
 chmod -R 755 storage cache public
+chmod -R 755 /var/lib/php
 
 # Set permissions for config.inc.php if it exists
 if [ -f "$CONFIG_PATH" ]; then
