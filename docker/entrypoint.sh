@@ -106,13 +106,8 @@ else
     # Use the built-in OJS installation tool
     echo "Running OJS installation via tools/install.php..."
     
-    # Create a simple installation script that uses the CLI tool
-    cat > /tmp/auto_install.sh << 'EOF'
-#!/bin/bash
-cd /var/www/html
-
-# Create a response file for the installation
-cat > /tmp/install_responses.txt << 'RESPONSES'
+    # Create a response file for the installation
+    cat > /tmp/install_responses.txt << 'RESPONSES'
 en
 storage
 admin
@@ -129,25 +124,23 @@ Y
 Y
 RESPONSES
 
-# Run the installation with the responses
-php tools/install.php < /tmp/install_responses.txt
+    # Run the installation with the responses
+    echo "Starting OJS installation with automated responses..."
+    cd /var/www/html
+    php tools/install.php < /tmp/install_responses.txt
 
-if [ $? -eq 0 ]; then
-    echo "OJS installation completed successfully!"
-    echo "Admin credentials:"
-    echo "  Username: admin"
-    echo "  Password: admin123"
-    echo "  Email: admin@ojs.onassgroupe.com"
-    echo "⚠️  IMPORTANT: Change these credentials after first login!"
-else
-    echo "OJS installation failed. You may need to install manually:"
-    echo "1. Visit https://ojs.onassgroupe.com"
-    echo "2. Or run: php tools/install.php in the container terminal"
-fi
-EOF
-
-    chmod +x /tmp/auto_install.sh
-    /tmp/auto_install.sh
+    if [ $? -eq 0 ]; then
+        echo "OJS installation completed successfully!"
+        echo "Admin credentials:"
+        echo "  Username: admin"
+        echo "  Password: admin123"
+        echo "  Email: admin@ojs.onassgroupe.com"
+        echo "⚠️  IMPORTANT: Change these credentials after first login!"
+    else
+        echo "OJS installation failed. You may need to install manually:"
+        echo "1. Visit https://ojs.onassgroupe.com"
+        echo "2. Or run: php tools/install.php in the container terminal"
+    fi
 fi
 
 # Create necessary directories
