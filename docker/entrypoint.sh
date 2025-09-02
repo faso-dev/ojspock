@@ -82,6 +82,101 @@ done
 
 echo "Database is ready!"
 
+# Check if OJS is installed (check if versions table exists)
+echo "Checking if OJS is installed..."
+if ! php -r "
+try {
+    \$pdo = new PDO('mysql:host='.getenv('DB_HOST').';port='.getenv('DB_PORT').';dbname='.getenv('DB_DATABASE'), getenv('DB_USER'), getenv('DB_PASSWORD'));
+    \$stmt = \$pdo->query('SHOW TABLES LIKE \"versions\"');
+    if (\$stmt->rowCount() == 0) {
+        echo 'OJS not installed, will install automatically';
+        exit(1);
+    } else {
+        echo 'OJS already installed';
+        exit(0);
+    }
+} catch (Exception \$e) {
+    echo 'Database error: ' . \$e->getMessage();
+    exit(1);
+}
+"; then
+    echo "OJS is already installed, skipping installation"
+else
+    echo "OJS not found, starting automatic installation..."
+    
+    # Create installation script
+    cat > /tmp/install_ojs.php << 'EOF'
+<?php
+// OJS Automatic Installation Script
+require_once('/var/www/html/lib/pkp/includes/bootstrap.php');
+
+// Set installation parameters
+$installer = new \PKP\install\Installer();
+$installer->setConfigFile('/var/www/html/config.inc.php');
+
+// Installation parameters (based on OJS InstallForm requirements)
+$params = [
+    'locale' => 'en',
+    'additionalLocales' => [],
+    'clientCharset' => 'utf-8',
+    'connectionCharset' => 'utf8',
+    'databaseCharset' => 'utf8',
+    'encryption' => 'sha1',
+    'filesDir' => 'storage',
+    'publicFilesDir' => 'public',
+    'skipFilesDir' => false,
+    'adminUsername' => 'admin',
+    'adminPassword' => 'admin123',
+    'adminEmail' => 'admin@ojs.onassgroupe.com',
+    'adminPassword2' => 'admin123',
+    'databaseDriver' => 'mysql',
+    'databaseHost' => getenv('DB_HOST'),
+    'databaseUsername' => getenv('DB_USER'),
+    'databasePassword' => getenv('DB_PASSWORD'),
+    'databaseName' => getenv('DB_DATABASE'),
+    'oaiRepositoryId' => 'ojs.onassgroupe.com',
+    'enableBeacon' => true,
+    'install' => true
+];
+
+try {
+    echo "Starting OJS installation...\n";
+    echo "Database: " . getenv('DB_HOST') . ":" . getenv('DB_DATABASE') . "\n";
+    echo "Admin: admin / admin123\n";
+    
+    $installer->install($params);
+    echo "OJS installation completed successfully!\n";
+    echo "Admin credentials:\n";
+    echo "Username: admin\n";
+    echo "Password: admin123\n";
+    echo "Email: admin@ojs.onassgroupe.com\n";
+    echo "Please change these credentials after first login!\n";
+} catch (Exception $e) {
+    echo "Installation failed: " . $e->getMessage() . "\n";
+    echo "Stack trace: " . $e->getTraceAsString() . "\n";
+    exit(1);
+}
+EOF
+
+    # Run the installation
+    echo "Running OJS installation script..."
+    php /tmp/install_ojs.php
+    
+    if [ $? -eq 0 ]; then
+        echo "OJS installation completed successfully!"
+        echo "You can now access your OJS installation at https://ojs.onassgroupe.com"
+        echo "Default admin credentials:"
+        echo "  Username: admin"
+        echo "  Password: admin123"
+        echo "  Email: admin@ojs.onassgroupe.com"
+        echo "⚠️  IMPORTANT: Change these credentials after first login!"
+    else
+        echo "OJS installation failed. You may need to install manually:"
+        echo "1. Visit https://ojs.onassgroupe.com"
+        echo "2. Or run: php tools/install.php in the container terminal"
+    fi
+fi
+
 # Create necessary directories
 mkdir -p /var/log/supervisor
 mkdir -p /var/log/nginx
