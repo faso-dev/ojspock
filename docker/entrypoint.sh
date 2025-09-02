@@ -277,37 +277,4 @@ nginx -t
 
 # Start services with supervisor
 echo "Starting services with supervisor..."
-/usr/bin/supervisord -c /etc/supervisor/supervisord.conf &
-
-# Wait a moment for services to start
-sleep 5
-
-# Check if services are running
-echo "Checking service status..."
-supervisorctl status
-
-# Wait for PHP-FPM socket
-echo "Waiting for PHP-FPM socket..."
-for i in $(seq 1 30); do
-    if [ -S /var/run/php-fpm.sock ]; then
-        echo "✅ PHP-FPM socket is ready"
-        break
-    fi
-    echo "Waiting for PHP-FPM socket... ($i/30)"
-    sleep 1
-done
-
-# Test if nginx is responding
-echo "Testing nginx..."
-if curl -f -s http://localhost:3000 > /dev/null; then
-    echo "✅ Nginx is responding"
-else
-    echo "❌ Nginx is not responding"
-fi
-
-echo "🚀 All services started successfully!"
-echo "📊 Service status:"
-supervisorctl status
-
-# Keep the container running
-wait
+exec /usr/bin/supervisord -c /etc/supervisor/supervisord.conf
