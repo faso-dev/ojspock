@@ -18,7 +18,6 @@ services:
       - ojs_storage:/var/www/html/storage
       - ojs_cache:/var/www/html/cache
       - ojs_public:/var/www/html/public
-      - ojs_config:/var/www/html/config.inc.php:ro
     depends_on:
       - db
       - redis
@@ -85,8 +84,6 @@ volumes:
   ojs_cache:
     driver: local
   ojs_public:
-    driver: local
-  ojs_config:
     driver: local
   backup_data:
     driver: local

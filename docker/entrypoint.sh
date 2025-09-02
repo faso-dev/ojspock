@@ -22,6 +22,19 @@ export SMTP_ENCRYPTION="${SMTP_ENCRYPTION:-none}"
 CONFIG_PATH="/var/www/html/config.inc.php"
 PERSISTENT_CONFIG_PATH="/var/www/html/storage/config.inc.php"
 
+# Check if config.inc.php is a directory (can happen with volume mounting issues)
+if [ -d "$CONFIG_PATH" ]; then
+    echo "WARNING: config.inc.php is a directory, removing it..."
+    rm -rf "$CONFIG_PATH"
+fi
+
+# Check if config.inc.php exists but is not writable (volume mount issue)
+if [ -f "$CONFIG_PATH" ] && [ ! -w "$CONFIG_PATH" ]; then
+    echo "WARNING: config.inc.php exists but is not writable, creating backup and replacing..."
+    cp "$CONFIG_PATH" "$CONFIG_PATH.backup" 2>/dev/null || true
+    rm -f "$CONFIG_PATH"
+fi
+
 # Check if persistent config exists
 if [ -f "$PERSISTENT_CONFIG_PATH" ]; then
     echo "Using existing persistent configuration..."
@@ -40,7 +53,19 @@ else
     fi
 fi
 
-chmod 644 "$CONFIG_PATH"
+# Always ensure the persistent config is up to date with current config
+# This handles cases where config was modified through OJS interface
+if [ -f "$CONFIG_PATH" ] && [ -f "$PERSISTENT_CONFIG_PATH" ]; then
+    # Compare timestamps and update persistent config if current is newer
+    if [ "$CONFIG_PATH" -nt "$PERSISTENT_CONFIG_PATH" ]; then
+        echo "Updating persistent configuration with current changes..."
+        cp "$CONFIG_PATH" "$PERSISTENT_CONFIG_PATH"
+    fi
+elif [ -f "$CONFIG_PATH" ] && [ ! -f "$PERSISTENT_CONFIG_PATH" ]; then
+    # If we have a config but no persistent version, save it
+    echo "Saving current configuration to persistent storage..."
+    cp "$CONFIG_PATH" "$PERSISTENT_CONFIG_PATH"
+fi
 
 # Wait for database
 echo "Waiting for database..."
@@ -66,9 +91,25 @@ mkdir -p storage/review
 mkdir -p public
 
 # Set proper permissions
-chown -R www-data:www-data storage cache public config.inc.php
+chown -R www-data:www-data storage cache public
 chmod -R 755 storage cache public
-chmod 644 config.inc.php
+
+# Set permissions for config.inc.php if it exists
+if [ -f "$CONFIG_PATH" ]; then
+    chown www-data:www-data "$CONFIG_PATH"
+    chmod 644 "$CONFIG_PATH"
+fi
+
+# Create a script to backup config changes
+cat > /usr/local/bin/backup-config.sh << 'EOF'
+#!/bin/sh
+# Backup current config to persistent storage
+if [ -f "/var/www/html/config.inc.php" ]; then
+    cp "/var/www/html/config.inc.php" "/var/www/html/storage/config.inc.php"
+    echo "$(date): Configuration backed up to persistent storage"
+fi
+EOF
+chmod +x /usr/local/bin/backup-config.sh
 
 # Start supervisor
 exec /usr/bin/supervisord -c /etc/supervisor/supervisord.conf
