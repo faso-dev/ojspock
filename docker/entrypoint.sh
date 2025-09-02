@@ -271,26 +271,43 @@ chmod +x /usr/local/bin/backup-config.sh
 echo "Testing PHP-FPM configuration..."
 php-fpm --test --fpm-config /usr/local/etc/php-fpm.d/www.conf
 
-# Start PHP-FPM first
-echo "Starting PHP-FPM..."
-php-fpm --fpm-config /usr/local/etc/php-fpm.d/www.conf &
-PHP_FPM_PID=$!
+# Test nginx configuration
+echo "Testing nginx configuration..."
+nginx -t
 
-# Wait for PHP-FPM socket to be created
+# Start services with supervisor
+echo "Starting services with supervisor..."
+/usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf &
+
+# Wait a moment for services to start
+sleep 5
+
+# Check if services are running
+echo "Checking service status..."
+supervisorctl status
+
+# Wait for PHP-FPM socket
 echo "Waiting for PHP-FPM socket..."
 for i in $(seq 1 30); do
     if [ -S /var/run/php-fpm.sock ]; then
-        echo "PHP-FPM socket created successfully"
+        echo "✅ PHP-FPM socket is ready"
         break
     fi
     echo "Waiting for PHP-FPM socket... ($i/30)"
     sleep 1
 done
 
-# Test nginx configuration
-echo "Testing nginx configuration..."
-nginx -t
+# Test if nginx is responding
+echo "Testing nginx..."
+if curl -f -s http://localhost:3000 > /dev/null; then
+    echo "✅ Nginx is responding"
+else
+    echo "❌ Nginx is not responding"
+fi
 
-# Start nginx
-echo "Starting nginx..."
-nginx -g 'daemon off;'
+echo "🚀 All services started successfully!"
+echo "📊 Service status:"
+supervisorctl status
+
+# Keep the container running
+wait
