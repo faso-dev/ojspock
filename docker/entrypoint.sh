@@ -126,6 +126,13 @@ session_cookie_name = OJSSID
 session_lifetime = 30
 session_cookie_samesite = Lax
 short_name = "ojs"
+time_zone = UTC
+date_format_short = "Y-m-d"
+date_format_long = "F j, Y"
+datetime_format_short = "Y-m-d h:i A"
+datetime_format_long = "F j, Y - h:i A"
+time_format = "h:i A"
+user_validation_period = 0
 
 [database]
 driver = mysql
