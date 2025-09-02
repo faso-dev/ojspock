@@ -275,6 +275,13 @@ php-fpm --test --fpm-config /usr/local/etc/php-fpm.d/www.conf
 echo "Testing nginx configuration..."
 nginx -t
 
-# Start services with supervisor
-echo "Starting services with supervisor..."
-exec /usr/bin/supervisord -c /etc/supervisor/supervisord.conf
+# Start PHP-FPM in background
+echo "Starting PHP-FPM..."
+php-fpm --fpm-config /usr/local/etc/php-fpm.d/www.conf &
+
+# Wait for PHP-FPM to start
+sleep 3
+
+# Start nginx in foreground
+echo "Starting nginx..."
+exec nginx -g 'daemon off;'
