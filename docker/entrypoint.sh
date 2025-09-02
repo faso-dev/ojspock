@@ -277,7 +277,7 @@ nginx -t
 
 # Start services with supervisor
 echo "Starting services with supervisor..."
-/usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf &
+/usr/bin/supervisord -c /etc/supervisor/supervisord.conf &
 
 # Wait a moment for services to start
 sleep 5
