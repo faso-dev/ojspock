@@ -220,15 +220,14 @@ RESPONSES
 
     if [ $? -eq 0 ]; then
         echo "OJS installation completed successfully!"
-        echo "Restoring full configuration..."
-        cp "$CONFIG_PATH.backup" "$CONFIG_PATH"
+        echo "Keeping the configuration created by OJS installation..."
         echo "Admin credentials:"
         echo "  Username: admin"
         echo "  Password: admin123"
         echo "  Email: admin@ojs.onassgroupe.com"
         echo "⚠️  IMPORTANT: Change these credentials after first login!"
     else
-        echo "OJS installation failed. Restoring configuration..."
+        echo "OJS installation failed. Restoring original configuration..."
         cp "$CONFIG_PATH.backup" "$CONFIG_PATH"
         echo "You may need to install manually:"
         echo "1. Visit https://ojs.onassgroupe.com"
