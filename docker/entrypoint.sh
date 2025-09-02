@@ -106,6 +106,88 @@ else
     # Use the built-in OJS installation tool
     echo "Running OJS installation via tools/install.php..."
     
+    # Temporarily modify config to disable version check during installation
+    echo "Temporarily disabling version check for installation..."
+    cp "$CONFIG_PATH" "$CONFIG_PATH.backup"
+    
+    # Create a minimal config for installation
+    cat > "$CONFIG_PATH" << 'CONFIG'
+<?php exit; // DO NOT DELETE?>
+; <?php exit; // DO NOT DELETE ?>
+; DO NOT DELETE THE ABOVE LINE!!!
+; Doing so will expose this configuration file through your web site!
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+[general]
+installed = Off
+base_url = "${APP_URL}"
+strict = Off
+session_cookie_name = OJSSID
+session_lifetime = 30
+session_cookie_samesite = Lax
+short_name = "ojs"
+
+[database]
+driver = mysql
+host = "${DB_HOST}"
+port = "${DB_PORT}"
+username = "${DB_USER}"
+password = "${DB_PASSWORD}"
+name = "${DB_DATABASE}"
+persistent = Off
+collation = utf8_general_ci
+
+[files]
+files_dir = storage
+public_dir = public
+review_dir = storage/review
+temp_dir = storage/tmp
+
+[email]
+default = "${SMTP_METHOD}"
+allow_envelope_sender = Off
+default_envelope_sender = "${SMTP_FROM_EMAIL:-noreply@example.com}"
+force_default_envelope_sender = Off
+force_dmarc_compliant_from = Off
+smtp_server = "${SMTP_HOST}"
+smtp_port = "${SMTP_PORT}"
+smtp_auth = "${SMTP_AUTH}"
+smtp_username = "${SMTP_USERNAME}"
+smtp_password = "${SMTP_PASSWORD}"
+smtp_suppress_errors = Off
+smtp_timeout = 5
+smtp_encryption = "${SMTP_ENCRYPTION}"
+smtp_auth_mechanism = "${SMTP_AUTH_MECHANISM:-PLAIN}"
+
+[security]
+force_ssl = Off
+force_login_ssl = Off
+session_check_ip = Off
+remember_me = On
+encryption = sha1
+allowed_html = "a[href|target|title],em,strong,cite,code,ul,ol,li[class],dl,dt,dd,b,i,u,img[src|alt],sup,sub,br,p"
+
+[cache]
+cache = file
+memcache_hostname = localhost
+memcache_port = 11211
+
+[i18n]
+locale = en_US
+client_charset = utf-8
+connection_charset = utf8
+database_charset = utf8
+
+[oai]
+oai = On
+
+[debug]
+show_stats = Off
+show_stacktrace = Off
+log_web_service_info = Off
+profiler = Off
+CONFIG
+
     # Create a response file for the installation
     cat > /tmp/install_responses.txt << 'RESPONSES'
 en
@@ -131,13 +213,17 @@ RESPONSES
 
     if [ $? -eq 0 ]; then
         echo "OJS installation completed successfully!"
+        echo "Restoring full configuration..."
+        cp "$CONFIG_PATH.backup" "$CONFIG_PATH"
         echo "Admin credentials:"
         echo "  Username: admin"
         echo "  Password: admin123"
         echo "  Email: admin@ojs.onassgroupe.com"
         echo "⚠️  IMPORTANT: Change these credentials after first login!"
     else
-        echo "OJS installation failed. You may need to install manually:"
+        echo "OJS installation failed. Restoring configuration..."
+        cp "$CONFIG_PATH.backup" "$CONFIG_PATH"
+        echo "You may need to install manually:"
         echo "1. Visit https://ojs.onassgroupe.com"
         echo "2. Or run: php tools/install.php in the container terminal"
     fi
