@@ -1,5 +1,5 @@
 # Multi-stage build for OJS
-FROM php:8.2-fpm-alpine AS base
+FROM php:8.1-fpm-alpine AS base
 
 # Install system dependencies
 RUN apk add --no-cache \
@@ -73,7 +73,10 @@ RUN mkdir -p storage/tmp \
 RUN echo "upload_max_filesize = 100M" >> /usr/local/etc/php/conf.d/uploads.ini \
     && echo "post_max_size = 100M" >> /usr/local/etc/php/conf.d/uploads.ini \
     && echo "max_execution_time = 300" >> /usr/local/etc/php/conf.d/uploads.ini \
-    && echo "memory_limit = 512M" >> /usr/local/etc/php/conf.d/uploads.ini
+    && echo "memory_limit = 512M" >> /usr/local/etc/php/conf.d/uploads.ini \
+    && echo "error_reporting = E_ALL & ~E_DEPRECATED & ~E_STRICT" >> /usr/local/etc/php/conf.d/error-reporting.ini \
+    && echo "display_errors = Off" >> /usr/local/etc/php/conf.d/error-reporting.ini \
+    && echo "log_errors = On" >> /usr/local/etc/php/conf.d/error-reporting.ini
 
 # Configure Nginx
 COPY docker/nginx.conf /etc/nginx/nginx.conf
