@@ -24,6 +24,12 @@ services:
     restart: unless-stopped
     networks:
       - ojs-network
+    labels:
+      - traefik.enable=true
+      - "traefik.http.routers.ojs-app.rule=Host(`ojs.onassgroupe.com`)"
+      - traefik.http.routers.ojs-app.entrypoints=websecure
+      - traefik.http.routers.ojs-app.tls.certresolver=letsencrypt
+      - traefik.http.services.ojs-app.loadbalancer.server.port=3000
 
   db:
     image: mysql:8.0
