@@ -308,18 +308,6 @@ chmod 660 /var/run/php-fpm.sock
 echo "✅ PHP-FPM is running (PID: $PHP_FPM_PID)"
 echo "✅ Socket: /var/run/php-fpm.sock"
 
-# Test PHP execution before starting nginx
-echo "Testing PHP execution..."
-echo "<?php echo 'PHP OK'; ?>" > /var/www/html/test.php
-if curl -f http://localhost:3000/test.php 2>/dev/null | grep -q "PHP OK"; then
-    echo "✅ PHP execution test PASSED"
-    rm -f /var/www/html/test.php
-else
-    echo "❌ PHP execution test FAILED"
-    rm -f /var/www/html/test.php
-    exit 1
-fi
-
 # Start nginx in foreground
 echo "✅ Starting nginx..."
 exec nginx -g 'daemon off;'
