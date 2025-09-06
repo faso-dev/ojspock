@@ -275,13 +275,51 @@ php-fpm --test --fpm-config /usr/local/etc/php-fpm.d/www.conf
 echo "Testing nginx configuration..."
 nginx -t
 
+# Ensure socket directory exists
+mkdir -p /var/run
+chown www-data:www-data /var/run
+
 # Start PHP-FPM in background
 echo "Starting PHP-FPM..."
 php-fpm --fpm-config /usr/local/etc/php-fpm.d/www.conf &
+PHP_FPM_PID=$!
 
-# Wait for PHP-FPM to start
-sleep 3
+# Wait for PHP-FPM to start and create socket
+echo "Waiting for PHP-FPM socket..."
+for i in {1..30}; do
+    if [ -S /var/run/php-fpm.sock ]; then
+        echo "✅ PHP-FPM socket created successfully"
+        break
+    fi
+    echo "Waiting for socket... ($i/30)"
+    sleep 1
+done
+
+# Check if PHP-FPM is running
+if ! kill -0 $PHP_FPM_PID 2>/dev/null; then
+    echo "❌ ERROR: PHP-FPM failed to start"
+    exit 1
+fi
+
+# Verify socket permissions
+chown www-data:www-data /var/run/php-fpm.sock
+chmod 660 /var/run/php-fpm.sock
+
+echo "✅ PHP-FPM is running (PID: $PHP_FPM_PID)"
+echo "✅ Socket: /var/run/php-fpm.sock"
+
+# Test PHP execution before starting nginx
+echo "Testing PHP execution..."
+echo "<?php echo 'PHP OK'; ?>" > /var/www/html/test.php
+if curl -f http://localhost:3000/test.php 2>/dev/null | grep -q "PHP OK"; then
+    echo "✅ PHP execution test PASSED"
+    rm -f /var/www/html/test.php
+else
+    echo "❌ PHP execution test FAILED"
+    rm -f /var/www/html/test.php
+    exit 1
+fi
 
 # Start nginx in foreground
-echo "Starting nginx..."
+echo "✅ Starting nginx..."
 exec nginx -g 'daemon off;'

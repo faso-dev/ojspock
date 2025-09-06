@@ -22,6 +22,12 @@ services:
       - db
       - redis
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
     networks:
       - ojs-network
     labels:
@@ -33,13 +39,7 @@ services:
       - "traefik.http.services.ojs-app.loadbalancer.healthcheck.path=/health"
       - "traefik.http.services.ojs-app.loadbalancer.healthcheck.interval=30s"
       - "traefik.http.services.ojs-app.loadbalancer.healthcheck.timeout=10s"
-      - "traefik.http.routers.ojs-app.middlewares=ojs-timeout"
-      - "traefik.http.middlewares.ojs-timeout.forwardauth.trustforwardheader=true"
-      - "traefik.http.middlewares.ojs-timeout.buffering.maxRequestBodyBytes=10485760"
-      - "traefik.http.middlewares.ojs-timeout.buffering.maxResponseBodyBytes=10485760"
-      - "traefik.http.middlewares.ojs-timeout.buffering.memRequestBodyBytes=2097152"
-      - "traefik.http.middlewares.ojs-timeout.buffering.memResponseBodyBytes=2097152"
-      - "traefik.http.middlewares.ojs-timeout.buffering.retryExpression=IsNetworkError() && Attempts() <= 2"
+      - "traefik.http.services.ojs-app.loadbalancer.healthcheck.initialstate=starting"
 
   db:
     image: mysql:8.0
